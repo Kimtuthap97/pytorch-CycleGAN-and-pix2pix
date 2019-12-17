@@ -3,6 +3,9 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
+import numpy as np
+from torch.autograd import Variable
+import torch.nn.functional as F
 
 
 ###############################################################################
@@ -206,6 +209,22 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 ##############################################################################
 # Classes
 ##############################################################################
+class GradLoss(nn.Module):
+    def __init__(self):
+        super(GradLoss, self).__init__()
+        np1 = np.array([[[[-1, 1],[0, 0]]]],'f')
+        self.op1 = Variable(torch.from_numpy(np1).cuda())
+        np2 = np.array([[[[-1, 0],[1, 0]]]],'f')
+        self.op2 = Variable(torch.from_numpy(np2).cuda())
+
+    def forward(self, image, target):
+        image1 = F.conv2d(image, self.op1, padding=0)
+        target1 = F.conv2d(target, self.op1, padding=0)
+        image2 = F.conv2d(image, self.op2, padding=0)
+        target2 = F.conv2d(target, self.op2, padding=0)
+        criterionL1 = nn.L1Loss()
+        return criterionL1(image1,target1) + criterionL1(image2, target2)
+    
 class GANLoss(nn.Module):
     """Define different GAN objectives.
 
@@ -234,6 +253,11 @@ class GANLoss(nn.Module):
             self.loss = nn.BCEWithLogitsLoss()
         elif gan_mode in ['wgangp']:
             self.loss = None
+        elif gan_mode == 'gradloss':
+            self.loss = GradLoss()
+        elif gan_mode == 'grad_mse':
+            self.loss = GradLoss()
+            self.mse = nn.MSELoss()
         else:
             raise NotImplementedError('gan mode %s not implemented' % gan_mode)
 
@@ -272,6 +296,14 @@ class GANLoss(nn.Module):
                 loss = -prediction.mean()
             else:
                 loss = prediction.mean()
+        elif self.gan_mode == 'gradloss':
+            target_tensor = self.get_target_tensor(prediction, target_is_real)
+            loss = self.loss(prediction, target_tensor)
+        elif self.gan_mode == 'grad_mse':
+            target_tensor = self.get_target_tensor(prediction, target_is_real)
+            #mse_loss = nn.MSELoss(prediction, target_tensor)
+            #print(type(self.loss(prediction, target_tensor)))
+            loss = self.loss(prediction, target_tensor) + self.mse(prediction, target_tensor)
         return loss
 
 

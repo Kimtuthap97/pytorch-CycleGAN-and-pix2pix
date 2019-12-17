@@ -25,7 +25,7 @@ class Pix2PixModel(BaseModel):
             the modified parser.
 
         For pix2pix, we do not use image buffer
-        The training objective is: GAN Loss + lambda_L1 * ||G(A)-B||_1
+        The training objective is: GAN Loss + lambda_L1 * ||G(A)-B||_1 + GradLoss
         By default, we use vanilla GAN loss, UNet with batchnorm, and aligned datasets.
         """
         # changing the default values to match the pix2pix paper (https://phillipi.github.io/pix2pix/)
@@ -62,7 +62,7 @@ class Pix2PixModel(BaseModel):
 
         if self.isTrain:
             # define loss functions
-            self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)
+            self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device) 
             self.criterionL1 = torch.nn.L1Loss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
