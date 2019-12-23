@@ -23,6 +23,8 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+import os
+import numpy as np
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
@@ -50,7 +52,13 @@ if __name__ == '__main__':
             epoch_iter += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
-
+            ########################################
+            #                                      #
+            #                                      #
+            ########################################
+            p = '/home/thaontp79/project/pytorch-CycleGAN-and-pix2pix/samples'
+            np.save(os.path.join(p, str(epoch)), np.concatenate([model.fake_B.cpu().detach().numpy(), model.real_B.cpu().detach().numpy()], axis=1))
+            
             if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
                 save_result = total_iters % opt.update_html_freq == 0
                 model.compute_visuals()
@@ -67,7 +75,7 @@ if __name__ == '__main__':
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
                 save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
-
+                
             iter_data_time = time.time()
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))

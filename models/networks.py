@@ -7,6 +7,8 @@ import numpy as np
 from torch.autograd import Variable
 import torch.nn.functional as F
 from pytorch_msssim import msssim
+import pytorch_msssim
+
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -254,6 +256,8 @@ class GANLoss(nn.Module):
             self.loss = None
         elif gan_mode == 'gradloss':
             self.loss = GradLoss()
+#         elif gan_mode == 'ms':
+#             self.loss = pytorch_msssim.MSSSIM()
         else:
             raise NotImplementedError('gan mode %s not implemented' % gan_mode)
 
@@ -299,9 +303,14 @@ class GANLoss(nn.Module):
             target_tensor = self.get_target_tensor(prediction, target_is_real)
             #mse_loss = nn.MSELoss(prediction, target_tensor)
             #print(type(self.loss(prediction, target_tensor)))
+            
             loss = self.loss(prediction, target_tensor) + self.mse(prediction, target_tensor)
+#         elif self.gan_mode == 'ms':
+            
+#             target_tensor = self.get_target_tensor(prediction, target_is_real)
+# #             print('shape', prediction.shape, target_tensor.shape)
+#             loss = self.loss(prediction, target_tensor)
         return loss
-
 
 def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', constant=1.0, lambda_gp=10.0):
     """Calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028

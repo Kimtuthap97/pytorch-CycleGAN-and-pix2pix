@@ -2,6 +2,8 @@ import torch
 from .base_model import BaseModel
 from . import networks
 import pytorch_msssim
+import numpy as np
+import os
 
 class Pix2PixModel(BaseModel):
     """ This class implements the pix2pix model, for learning a mapping from input images to output images given paired data.
@@ -106,18 +108,23 @@ class Pix2PixModel(BaseModel):
 
     def backward_G(self):
         """Calculate GAN and L1 loss for the generator"""
+        
         # First, G(A) should fake the discriminator
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)
         pred_fake = self.netD(fake_AB)
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
+        
         # Second, G(A) = B
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
         # combine loss and calculate gradients
 #         print('gradloss', self.fake_B.shape, self.real_B.shape)
-        self.loss_G = self.loss_G_GAN + self.loss_G_L1 #+ self.GradLoss(self.fake_B[:, 0:1, :, :], self.real_B[:, 0:1, :, :])
-        
-        if torch.isnan(self.m(self.fake_B, self.real_B)) == False:
+#         self.m[self.m != self.m] = 0.001
+#         print('m', hem)
+        self.loss_G = self.loss_G_GAN + self.loss_G_L1
+        if torch.isnan(self.m(self.fake_B, self.real_B)).sum() == 0:
+#             print('Passing here')
             self.loss_G = self.loss_G + self.m(self.fake_B, self.real_B)
+        #self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.m(self.fake_B, self.real_B)
         self.loss_G.backward()
 
     def optimize_parameters(self):
