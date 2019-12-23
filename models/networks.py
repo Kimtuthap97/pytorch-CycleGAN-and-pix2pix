@@ -6,8 +6,7 @@ from torch.optim import lr_scheduler
 import numpy as np
 from torch.autograd import Variable
 import torch.nn.functional as F
-
-
+from pytorch_msssim import msssim
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -255,9 +254,6 @@ class GANLoss(nn.Module):
             self.loss = None
         elif gan_mode == 'gradloss':
             self.loss = GradLoss()
-        elif gan_mode == 'grad_mse':
-            self.loss = GradLoss()
-            self.mse = nn.MSELoss()
         else:
             raise NotImplementedError('gan mode %s not implemented' % gan_mode)
 
