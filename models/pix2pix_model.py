@@ -120,10 +120,11 @@ class Pix2PixModel(BaseModel):
 #         print('gradloss', self.fake_B.shape, self.real_B.shape)
 #         self.m[self.m != self.m] = 0.001
 #         print('m', hem)
-        self.loss_G = self.loss_G_GAN + self.loss_G_L1
-        if torch.isnan(self.m(self.fake_B, self.real_B)).sum() == 0:
+        self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.m(self.fake_B, self.real_B)
+#     self.GradLoss(self.fake_B[:, 0:1, :, :], self.real_B[:, 0:1, :, :])
+#         if torch.isnan(self.m(self.fake_B, self.real_B)).sum() == 0:
 #             print('Passing here')
-            self.loss_G = self.loss_G + self.m(self.fake_B, self.real_B)
+#             self.loss_G = self.loss_G + self.m(self.fake_B, self.real_B) 
         #self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.m(self.fake_B, self.real_B)
         self.loss_G.backward()
 
